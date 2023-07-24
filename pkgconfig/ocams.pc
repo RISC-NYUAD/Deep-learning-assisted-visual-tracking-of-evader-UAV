@@ -1,0 +1,8 @@
+prefix=/home/risc/openCVmine/testROS/ocams/devel
+
+Name: ocams
+Description: Description of ocams
+Version: 1.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: roscpp cv_bridge image_transport camera_info_manager sensor_msgs

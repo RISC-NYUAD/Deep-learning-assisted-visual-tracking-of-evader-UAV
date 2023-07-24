@@ -1,0 +1,243 @@
+0. (OPTIONAL - BUILD FROM SOURCE) - https://answers.ros.org/question/222390/how-to-update-the-ros-driver-for-the-velodyne-vlp-16/
+
+- https://answers.ros.org/question/226594/how-do-i-build-ros-vlp16-velodyne-driver-for-indigo-using-catkin/
+- https://github.com/Kitware/VeloView
+
+1. roslaunch velodyne_driver nodelet_manager.launch model:=VLP16  (CHECK - http://wiki.ros.org/velodyne_driver#Parameters)
+
+//// RESULT
+
+started roslaunch server http://at139-XPS-15-9560:37831/
+
+SUMMARY
+========
+
+PARAMETERS
+ * /rosdistro: kinetic
+ * /rosversion: 1.12.7
+ * /velodyne_nodelet_manager_driver/device_ip: 
+ * /velodyne_nodelet_manager_driver/frame_id: velodyne
+ * /velodyne_nodelet_manager_driver/model: 16
+ * /velodyne_nodelet_manager_driver/pcap: 
+ * /velodyne_nodelet_manager_driver/port: 2368
+ * /velodyne_nodelet_manager_driver/read_fast: False
+ * /velodyne_nodelet_manager_driver/read_once: False
+ * /velodyne_nodelet_manager_driver/repeat_delay: 0.0
+ * /velodyne_nodelet_manager_driver/rpm: 600.0
+
+NODES
+  /
+    velodyne_nodelet_manager (nodelet/nodelet)
+    velodyne_nodelet_manager_driver (nodelet/nodelet)
+
+auto-starting new master
+process[master]: started with pid [6859]
+ROS_MASTER_URI=http://localhost:11311
+
+setting /run_id to f9dcd620-f058-11e7-b64e-9cb6d0e271ff
+process[rosout-1]: started with pid [6872]
+started core service [/rosout]
+process[velodyne_nodelet_manager-2]: started with pid [6875]
+process[velodyne_nodelet_manager_driver-3]: started with pid [6876]
+[ERROR] [1514965120.553120014]: Unable to open calibration file:
+
+//// END RESULT
+
+
+2. roslaunch velodyne_pointcloud cloud_nodelet.launch
+
+
+////  RESULT
+
+started roslaunch server http://at139-XPS-15-9560:37501/
+
+SUMMARY
+========
+
+PARAMETERS
+ * /rosdistro: kinetic
+ * /rosversion: 1.12.7
+ * /velodyne_nodelet_manager_cloud/calibration: 
+ * /velodyne_nodelet_manager_cloud/max_range: 130.0
+ * /velodyne_nodelet_manager_cloud/min_range: 0.9
+
+NODES
+  /
+    velodyne_nodelet_manager_cloud (nodelet/nodelet)
+
+ROS_MASTER_URI=http://localhost:11311
+
+core service [/rosout] found
+process[velodyne_nodelet_manager_cloud-1]: started with pid [7078]
+
+//// END RESULT
+
+
+
+The following commands are to install the velodyne ROS driver package to convert
+Velodyne data to point cloud data.
+ROS Kinetic:
+$ sudo apt-get install ros-kinetic-velodyne
+ROS Indigo:
+$ sudo apt-get install ros-indigo-velodyne
+These commands will install the ROS Velodyne driver and point cloud converter packages.
+This driver supports models such as the HDL-64E, HDL-32E, and VLP-16.
+Here are the commands to start the driver nodelets:
+$ roslaunch velodyne_driver nodelet_manager.launch model:=32E
+Here, you need to mention the model name along with the launch file to start the driver for
+a specific model.
+The following command will start the converter nodelets to convert Velodyne messages
+( velodyne_msgs/VelodyneScan ) to a point cloud ( sensor_msgs/PointCloud2 ). Here is
+the command to perform this conversion:
+$ roslaunch velodyne_pointcloud cloud_nodelet.launch
+calibration:=~/calibration_file.yaml
+This will launch the calibration file for Velodyne, which is necessary for correcting noise
+from the sensor.
+We can write all these commands to a launch file, which is shown in the following code
+block. If you run this launch file, the driver node and point cloud convertor nodelets will
+start, and we can work with the sensor data:
+<launch>
+<!-- start nodelet manager and driver nodelets -->
+<include file="$(find
+velodyne_driver)/launch/nodelet_manager.launch" />
+<!-- start transform nodelet -->
+<include file="$(find
+velodyne_pointcloud)/launch/transform_nodelet.launch">
+<arg name="calibration"
+value="$(find
+velodyne_pointcloud)/params/64e_utexas.yaml"/>
+</include>
+</launch>
+
+
+The calibration files for each model are available in the velodyne_pointcloud package.
+Note: The connection procedure of Velodyne to PC is given here:
+http://wiki.ros.org/velodyne/Tutorials/Getting%20Started%20with%
+20the%20HDL-32E
+
+
+3. 	http://wiki.ros.org/velodyne/Tutorials/Getting%20Started%20with%20the%20HDL-32E
+	http://wiki.ros.org/velodyne/Tutorials/Getting%20Started%20with%20the%20Velodyne%20VLP16
+	https://answers.ros.org/question/261416/how-to-connect-vlp-16-confused-about-the-tutorial/
+	https://answers.ros.org/question/244445/having-problems-with-velodyne-vlp-16-and-ros/
+	https://answers.ros.org/question/261416/how-to-connect-vlp-16-confused-about-the-tutorial/
+
+
+3.0. PREPARE NETWORK
+
+https://answers.ros.org/question/113091/using-velodynehdl-32e/
+
+3.0.1
+Here you have an alternative. If you don't want to stop the network manager, you can also make the steps 1 and 2 with an interface, using the tool Network of the Ubuntu. You can find it in the applications menu of Ubuntu. You go to the options of the wired connexion, menu IPv4, then Manual method instead of automatic one, and insert the IP (step 1) and the route (step 2).
+
+3.0.2 - see IPs
+
+https://stackoverflow.com/questions/13669585/how-to-get-a-list-of-all-valid-ip-addresses-in-a-local-network
+
+sudo apt-get install nmap
+
+then
+
+nmap -sP 192.168.1.*
+nmap -v -sn 192.168.0.*
+
+3.0.3 - MY STEPS
+
+- PUT 192.168.1.77 (255.255.255.0 mask and 192.168.0.1 subnet) in IPv4 in Wired Connection and call LiDAR page through 192.168.1.201
+
+- ifconfig -a (show ports)
+
+- sudo ifconfig enxd481d7527b1e up
+
+- sudo ip addr add 192.168.1.200 dev enxd481d7527b1e
+
+- sudo route add -net 192.168.1.0 netmask 255.255.255.0 dev enxd481d7527b1e
+
+-- NEW WHAT WORKED (as described in the official VLP wiki)
+
+sudo ifconfig enxd481d7527b1e 192.168.3.100
+sudo route add 192.168.1.201 enxd481d7527b1e
+
+
+
+WHERE IS THE " VLP16_points.launch " file ??/
+- https://github.com/ros-drivers/velodyne/blob/master/velodyne_pointcloud/launch/VLP16_points.launch
+- FOUND IN velodyne/velodyne_pointcloud/launch/VLP16_points.launch
+- https://answers.ros.org/question/232949/different-rpmportreturn-type-velodyne-vlp16/
+- http://wiki.ros.org/velodyne_driver#Parameters
+- SAMPLE CHANGED FILE - https://answers.ros.org/question/245218/how-to-use-two-vlp16-with-just-one-computer-at-a-same-time/
+- http://wiki.ros.org/velodyne_pointcloud
+
+3a. Connect to the LIDAR
+
+    - Power the LIDAR via the included adapter
+    - Connect the LIDAR to an Ethernet port on your computer.
+    - Statically assign an IP to this port in the 192.168.3.x range. 
+
+sudo ifconfig eth0 192.168.3.100
+
+    - Add a static route to the LIDAR's IP address. The IP address can be found on the CD case which was included with the LIDAR. 
+
+sudo route add 192.168.XX.YY eth0
+
+
+
+View Data
+
+    Convert the provided calibration data from the standard Velodyne XML format to the node's YAML format. It is usually kept in the "DSR Viewer" folder on the CD which was included with the LIDAR. 
+
+rosrun velodyne_pointcloud gen_calibration.py 32db.xml (THIS IS NOT NEEDED IN VLP16 CASE) !!!!
+
+- FOR VLP 16 --- 
+-  roslaunch velodyne_pointcloud VLP16_points.launch
+
+
+3a.0. CORRECTION FOR VLP 16
+
+https://answers.ros.org/question/89756/velodyne-calibration/
+
+https://answers.ros.org/question/254886/convert-the-provided-calibration-data-from-the-standard-velodyne-xml-format-to-the-nodes-yaml-format-it-is-usually-kept-in-the-dsr-viewer-folder-on/
+
+It appears to have been adapted from the 32e tutorial, and not fully converted for the VLP-16. The line you mention refers to a 32e XML file. It should not be needed for the VLP-16. To view the points run VLP16_points.launch instead of 32e_points.launch. 
+
+3a.1.
+
+    Launch the provided pointcloud generation launchfile, specifying the absolute path of the calibration file that was generated in the previous step. 
+
+roslaunch velodyne_pointcloud 32e_points.launch calibration:=/home/user/32db.yaml
+
+- FOR VLP 16 --- (NOTE in documents was VLP16-points.launch, it needs to be VLP16_points.launch with underscore)
+-  roslaunch velodyne_pointcloud VLP16_points.launch
+
+
+    Launch rviz, with the "velodyne" frame as the fixed frame. 
+
+rosrun rviz rviz -f velodyne
+
+    In the "displays" panel, click "Add", then select "Point Cloud2", then press "OK".
+    In the "Topic" field of the new "Point Cloud2" tab, enter "/velodyne_points" 
+
+
+BASIC !!!!!!!!!!!!!!!!!!!!!!!!! - http://wiki.ros.org/velodyne/Tutorials/Getting%20Started%20with%20the%20Velodyne%20VLP16
+				- https://answers.ros.org/question/261416/how-to-connect-vlp-16-confused-about-the-tutorial/
+
+
+4. BUILDING WITH LIDAR LIBS
+- HOW TO BUILD
+
+4.1. Install 
+sudo apt-get --reinstall install libeigen3-dev 
+
+sudo apt-get install libeigen3-dev 
+
+4.2. Add path of PCL to CMakeLists.txt (include_directories( ${OpenCV_INCLUDE_DIRS} ./usr/include ./lib/include ./include /usr/include/pcl-1.7/))
+
+4.3. Add linker libs - https://ask.helplib.com/linker/post_10181068
+
+
+
+
+
+
+
+

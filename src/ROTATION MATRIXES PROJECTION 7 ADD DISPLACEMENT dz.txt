@@ -1,0 +1,443 @@
+syms psi thi phi  dx dy dz x y z f X2 Y2 real
+
+subs(A,psi,0)
+
+R1=[1 0 0; 0 cos(thi) -sin(thi); 0 sin(thi) cos(thi)]
+R2=[cos(psi) 0 sin(psi); 0 1 0; -sin(psi) 0 cos(psi)]
+R = R2*R1
+R_from_paper = [cos(psi) sin(psi)*sin(thi) sin(psi)*cos(thi); 0 cos(thi) -sin(thi); -sin(psi) cos(psi) * sin(thi) cos(psi) * cos(thi)]
+X = [x y z]
+FINAL_ROT = X * R
+FINAL_ROT'
+
+
+
+R1=[1 0 0; 0 cos(thi) -sin(thi); 0 sin(thi) cos(thi)] % tilt or pitch, rot theta (thi) on x 
+R2=[cos(psi) 0 sin(psi); 0 1 0; -sin(psi) 0 cos(psi)] % pan or yaw, rot psi on y
+R = R2*R1 %roll, pitch, then yaw, pan - tilt, then roll
+X = [x y z]
+FINAL_ROT1 = X * R2
+FINAL_ROT2 = FINAL_ROT1  * R1
+FINAL_ROT2'
+
+% ADD ROLL
+
+R3 = [cos(phi) -sin(phi) 0; sin(phi) cos(phi) 0; 0 0 1] % roll, rot phi on y
+FINAL_ROT3 = FINAL_ROT2  * R3;
+FINAL_ROT3'
+
+% Substitude to get 2D representation
+% https://www.mathworks.com/help/symbolic/subs.html
+% subs(s,old,new) returns a copy of s, replacing all occurrences of old with new, and then evaluates s.
+X2 = (x * z)/f
+Y2 = (y * z)/f
+
+% for pan - tilt X
+FINAL_ROT2D = subs(FINAL_ROT2,x,X2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,y,Y2) 
+FINAL_ROT2DX = FINAL_ROT2D / cos(psi) %simplify for deriving X !!!!
+FINAL_ROT2DX = simplify(FINAL_ROT2DX ,'Steps',150)
+FINAL_ROT2DX'
+FINAL_ROT2DDIV_X = FINAL_ROT2DX(1) / FINAL_ROT2DX(3)
+FINAL_ROT2DDIV_X = simplify(FINAL_ROT2DDIV_X,'Steps',150)
+
+FINAL_ROT2DY = FINAL_ROT2D / cos(thi) %simplify for deriving Y !!!!
+FINAL_ROT2DY = simplify(FINAL_ROT2DY ,'Steps',150)
+FINAL_ROT2DY'
+FINAL_ROT2DDIV_Y = FINAL_ROT2DY(2) / FINAL_ROT2DY(3)
+FINAL_ROT2DDIV_Y = simplify(FINAL_ROT2DDIV_Y,'Steps',150)
+
+%show equations nicely
+%https://www.mathworks.com/help/symbolic/sym.latex.html
+%https://www.mathworks.com/help/matlab/matlab_prog/insert-equations.html
+%https://www.mathworks.com/matlabcentral/answers/340517-is-it-possible-to-output-expressions-using-latex
+
+FINAL_ROT2DDIV_X_LATEX = latex(FINAL_ROT2DDIV_X)
+FINAL_ROT2DDIV_Y_LATEX = latex(FINAL_ROT2DDIV_Y)
+
+
+
+%%% ROLL ADDITION
+% for pan - tilt X
+FINAL_ROT2D = subs(FINAL_ROT3,x,X2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,y,Y2) 
+FINAL_ROT2DX = FINAL_ROT2D / cos(psi) %simplify for deriving X !!!!
+FINAL_ROT2DX = simplify(FINAL_ROT2DX ,'Steps',150)
+FINAL_ROT2DX'
+FINAL_ROT2DDIV_X = FINAL_ROT2DX(1) / FINAL_ROT2DX(3)
+FINAL_ROT2DDIV_X = simplify(FINAL_ROT2DDIV_X,'Steps',150)
+
+FINAL_ROT2DY = FINAL_ROT2D / cos(thi) %simplify for deriving Y !!!!
+FINAL_ROT2DY = simplify(FINAL_ROT2DY ,'Steps',150)
+FINAL_ROT2DY'
+FINAL_ROT2DDIV_Y = FINAL_ROT2DY(2) / FINAL_ROT2DY(3)
+FINAL_ROT2DDIV_Y = simplify(FINAL_ROT2DDIV_Y,'Steps',150)
+
+%show equations nicely
+%https://www.mathworks.com/help/symbolic/sym.latex.html
+%https://www.mathworks.com/help/matlab/matlab_prog/insert-equations.html
+%https://www.mathworks.com/matlabcentral/answers/340517-is-it-possible-to-output-expressions-using-latex
+
+FINAL_ROT2DDIV_X_LATEX = latex(FINAL_ROT2DDIV_X)
+FINAL_ROT2DDIV_Y_LATEX = latex(FINAL_ROT2DDIV_Y)
+
+
+
+
+============ WITHOUT ROLL
+FINAL_ROT2DDIV_X = 
+-(f*sin(psi) - x*cos(psi))/(f*cos(psi)*cos(thi) - y*sin(thi) + x*cos(thi)*sin(psi))
+
+FINAL_ROT2DDIV_Y = 
+(cos(psi)*tan(thi) + (y + x*sin(psi)*tan(thi))/f)/(cos(psi) + (x*sin(psi) - y*tan(thi))/f)
+ 
+
+
+
+============= EQUATIONS FOR C++ CODE WITH EXACT ROLL INCLUSION
+
+FINAL_ROT2DDIV_X = 
+(sin(phi)*(sin(thi)*(cos(psi) + (x*sin(psi))/f) + (y*cos(thi))/f) - cos(phi)*(sin(psi) - (x*cos(psi))/f))/(cos(psi)*(cos(thi) - (y*sin(thi) - x*cos(thi)*sin(psi))/(f*cos(psi))))
+ 
+FINAL_ROT2DDIV_Y = 
+((sin(phi)*(sin(psi) - (x*cos(psi))/f) + cos(phi)*sin(thi)*(cos(psi) + (x*sin(psi))/f))/cos(thi) + (y*cos(phi))/f)/(cos(psi) + (x*sin(psi) - y*tan(thi))/f)
+ 
+
+
+
+
+
+
+
+
+========
+1st PAPER
+ans =
+ 
+                                x*cos(psi) - z*sin(psi)
+ y*cos(thi) + z*cos(psi)*sin(thi) + x*sin(psi)*sin(thi)
+ z*cos(psi)*cos(thi) - y*sin(thi) + x*cos(thi)*sin(psi)
+
+2ond PAPER
+FINAL_ROT =
+ 
+                                x*cos(psi) - z*sin(psi)
+ y*cos(thi) + z*cos(psi)*sin(thi) + x*sin(psi)*sin(thi)
+ z*cos(psi)*cos(thi) - y*sin(thi) + x*cos(thi)*sin(psi)
+
+
+MY CALCULATIONS
+stage2a =
+ 
+                         x*cos(psi) - z*sin(psi)
+ sin(thi)*(z*cos(psi) + x*sin(psi)) + y*cos(thi)
+ cos(thi)*(z*cos(psi) + x*sin(psi)) - y*sin(thi)
+ 
+ 
+stage =
+ 
+                                x*cos(psi) - z*sin(psi)
+ y*cos(thi) + z*cos(psi)*sin(thi) + x*sin(psi)*sin(thi)
+ z*cos(psi)*cos(thi) - y*sin(thi) + x*cos(thi)*sin(psi)
+
+
+===================== ROTATION MATRIX
+RR = R2*R1*R3
+%RR = RR'
+RRS = simplify(RR ,'Steps',150)
+RRS_LATEX = latex(RRS)
+FINAL_ROT3 = X  * RR;
+FINAL_ROT3 = simplify(FINAL_ROT3 ,'Steps',150)
+FINAL_ROT3'
+
+==================== RADIAL AND VORTEX FIELDS PLOT
+
+% Define initial parameters
+x_np = 1;
+a = 1;
+n = 1;
+
+% Set up domain (Cartesian)
+x = -a:0.1:a;
+y = -a:0.1:a;
+
+[X, Y] = meshgrid(x, y);
+
+% Allocate output
+U = zeros(size(X));
+V = zeros(size(X));
+
+% Loop over each point in domain
+for ii = 1:length(x)
+    for jj = 1:length(y)
+        % Compute polar representation
+        r = norm([X(ii,jj), Y(ii,jj)]);
+        phi = atan2(Y(ii,jj), X(ii,jj));
+
+        % Compute polar unit vectors
+        rhat = [cos(phi); sin(phi)];
+        phihat = [-sin(phi); cos(phi)];
+
+        % Compute output (in polar co-ordinates)
+        u_R = -1/2*((besselj(n-1, x_np*r/a)-besselj(n+1, x_np*r/a))/a)*cos(n*phi);
+        u_PHI = n*(besselj(n, x_np*r/a)/(x_np*r))*sin(phi);
+
+        % Transform output to Cartesian co-ordinates
+        U(ii,jj) = u_R*rhat(1) + u_PHI*phihat(1);
+        V(ii,jj) = u_R*rhat(2) + u_PHI*phihat(2);
+    end
+end
+
+% Generate quiver plot
+quiver(X, Y, U, V);
+
+
+================= RADIAL - ZOOM
+
+[x,y] = meshgrid(0:0.2:2,0:0.2:2);%center at 1,1
+%u = cos(x).*y;
+%v = sin(x).*y;
+u = -(x-1);
+v = -(y-1);
+
+figure
+quiver(x,y,u,v)
+
+
+=============== VORTEX - ROLL
+
+[x,y] = meshgrid(0:0.2:4,0:0.2:4);%center at 1,1
+
+xoff = x-2
+yoff = y-2
+Dcs = xoff.^2 + yoff.^2
+Dc = sqrt(Dcs)
+Rx = xoff./Dcs
+Ry = -yoff./Dcs
+R = sqrt(Rx.^2 + Ry.^2)
+u = Dc .* (Ry ./ R);
+v = Dc .* (Rx ./ R);
+
+figure
+quiver(x,y,u,v)
+
+
+
+
+
+
+//////////////////////////////////////////////////// ADD DISPLACEMENT HANDLING /////////////////////////////
+syms psi thi phi dx dy dz x y z f X2 Y2 real
+
+%T1=[1 0 0 dx; 0 1 0 dy; 0 0 1 dz; 0 0 1 0]
+T1=[1 0 0 dx; 0 1 0 dy; 0 0 1 0; 0 0 0 1]
+R = T1
+X = [x y z 1]
+%FINAL_ROT2 = X * R
+%FINAL_ROT2 = R * X'
+%FINAL_ROT2 = inv(R) * X'
+FINAL_ROT2 = X * inv(R)'
+FINAL_ROT2'
+
+% Substitude to get 2D representation
+% https://www.mathworks.com/help/symbolic/subs.html
+% subs(s,old,new) returns a copy of s, replacing all occurrences of old with new, and then evaluates s.
+X2 = (x * z)/f
+Y2 = (y * z)/f
+
+dX = (dx * z)/f
+dY = (dy * z)/f
+
+% for pan - tilt X
+FINAL_ROT2D = subs(FINAL_ROT2,x,X2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,y,Y2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,dx,dX) 
+FINAL_ROT2D = subs(FINAL_ROT2D,dy,dY) 
+FINAL_ROT2DX = FINAL_ROT2D  %simplify for deriving X !!!!
+FINAL_ROT2DX = simplify(FINAL_ROT2DX ,'Steps',150)
+FINAL_ROT2DX'
+FINAL_ROT2DDIV_X = FINAL_ROT2DX(1) / FINAL_ROT2DX(3)
+FINAL_ROT2DDIV_X = simplify(FINAL_ROT2DDIV_X,'Steps',150)
+
+FINAL_ROT2DY = FINAL_ROT2D  %simplify for deriving Y !!!!
+FINAL_ROT2DY = simplify(FINAL_ROT2DY ,'Steps',150)
+FINAL_ROT2DY'
+FINAL_ROT2DDIV_Y = FINAL_ROT2DY(2) / FINAL_ROT2DY(3)
+FINAL_ROT2DDIV_Y = simplify(FINAL_ROT2DDIV_Y,'Steps',150)
+
+%show equations nicely
+%https://www.mathworks.com/help/symbolic/sym.latex.html
+%https://www.mathworks.com/help/matlab/matlab_prog/insert-equations.html
+%https://www.mathworks.com/matlabcentral/answers/340517-is-it-possible-to-output-expressions-using-latex
+
+FINAL_ROT2DDIV_X_LATEX = latex(FINAL_ROT2DDIV_X)
+FINAL_ROT2DDIV_Y_LATEX = latex(FINAL_ROT2DDIV_Y)
+
+
+
+
+
+///////////////////////////////// EMBED WITH ROLL AND DZ/////////////////////////////////////////
+
+syms psi thi phi  dx dy dz x y z f X2 Y2 real
+
+T1=[1 0 0 dx; 0 1 0 dy; 0 0 1 dz; 0 0 0 1];
+
+R1=[1 0 0 0; 0 cos(thi) -sin(thi) 0; 0 sin(thi) cos(thi) 0; 0 0 0 1] % tilt or pitch, rot theta (thi) on x 
+R2=[cos(psi) 0 sin(psi) 0; 0 1 0 0; -sin(psi) 0 cos(psi) 0; 0 0 0 1] % pan or yaw, rot psi on y
+R = R2*R1 %roll, pitch, then yaw, pan - tilt, then roll
+X = [x y z 1]
+FINAL_ROT0 = X * inv(T1)'
+FINAL_ROT1 = FINAL_ROT0 * R2
+FINAL_ROT2 = FINAL_ROT1 * R1
+%%%FINAL_ROT2 = FINAL_ROT2 * inv(T1)'
+FINAL_ROT2'
+
+% ADD ROLL
+
+R3 = [cos(phi) -sin(phi) 0 0 ; sin(phi) cos(phi) 0 0; 0 0 1 0; 0 0 0 1] % roll, rot phi on y
+FINAL_ROT3 = FINAL_ROT2  * R3;
+FINAL_ROT3'
+
+% Substitude to get 2D representation
+% https://www.mathworks.com/help/symbolic/subs.html
+% subs(s,old,new) returns a copy of s, replacing all occurrences of old with new, and then evaluates s.
+X2 = (x * (z + dz))/f
+Y2 = (y * (z + dz))/f
+dX = (dx * (z + dz))/f
+dY = (dy * (z + dz))/f
+
+%%% ROLL ADDITION
+% for pan - tilt X
+FINAL_ROT2D = subs(FINAL_ROT3,x,X2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,y,Y2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,dx,dX) 
+FINAL_ROT2D = subs(FINAL_ROT2D,dy,dY) 
+FINAL_ROT2DX = FINAL_ROT2D / cos(psi) %simplify for deriving X !!!!
+FINAL_ROT2DX = simplify(FINAL_ROT2DX ,'Steps',150)
+FINAL_ROT2DX'
+FINAL_ROT2DDIV_X = FINAL_ROT2DX(1) / FINAL_ROT2DX(3)
+FINAL_ROT2DDIV_X = simplify(FINAL_ROT2DDIV_X,'Steps',150)
+
+FINAL_ROT2DY = FINAL_ROT2D / cos(thi) %simplify for deriving Y !!!!
+FINAL_ROT2DY = simplify(FINAL_ROT2DY ,'Steps',150)
+FINAL_ROT2DY'
+FINAL_ROT2DDIV_Y = FINAL_ROT2DY(2) / FINAL_ROT2DY(3)
+FINAL_ROT2DDIV_Y = simplify(FINAL_ROT2DDIV_Y,'Steps',150)
+
+%show equations nicely
+%https://www.mathworks.com/help/symbolic/sym.latex.html
+%https://www.mathworks.com/help/matlab/matlab_prog/insert-equations.html
+%https://www.mathworks.com/matlabcentral/answers/340517-is-it-possible-to-output-expressions-using-latex
+
+FINAL_ROT2DDIV_X_LATEX = latex(FINAL_ROT2DDIV_X)
+FINAL_ROT2DDIV_Y_LATEX = latex(FINAL_ROT2DDIV_Y)
+
+
+%%%%%%%%%%%%%% RESULT ROLL + DISPLACE X,Y C++
+
+FINAL_ROT2DDIV_X =
+-(cos(phi)*(sin(psi) + cos(psi)*(dx/f - x/f)) - sin(phi)*(sin(thi)*(cos(psi) - sin(psi)*(dx/f - x/f)) - cos(thi)*(dy/f - y/f)))/(cos(psi)*(cos(thi) + (sin(thi)*(dy/f - y/f) - cos(thi)*sin(psi)*(dx/f - x/f))/cos(psi)))
+ 
+FINAL_ROT2DDIV_Y =
+((sin(phi)*(sin(psi) + cos(psi)*(dx/f - x/f)) + cos(phi)*sin(thi)*(cos(psi) - sin(psi)*(dx/f - x/f)))/cos(thi) - cos(phi)*(dy/f - y/f))/((f*cos(psi) - dx*sin(psi) + x*sin(psi))/f + (dy*sin(thi) - y*sin(thi))/(f*cos(thi)))
+ 
+%%%%%%%%%%%%%% RESULT ROLL + DISPLACE X,Y LATEX
+
+FINAL_ROT2DDIV_X_LATEX =
+
+    '-\frac{\cos\left(\varphi \right)\,\left(\sin\left(\mathrm{psi}\right)+\cos\left(\mathrm{psi}\right)\,\left(\frac{\mathrm{dx}}{f}-\frac{x}{f}\right)\right)-\sin\left(\varphi \right)\,\left(\sin\left(\mathrm{thi}\right)\,\left(\cos\left(\mathrm{psi}\right)-\sin\left(\mathrm{psi}\right)\,\left(\frac{\mathrm{dx}}{f}-\frac{x}{f}\right)\right)-\cos\left(\mathrm{thi}\right)\,\left(\frac{\mathrm{dy}}{f}-\frac{y}{f}\right)\right)}{\cos\left(\mathrm{psi}\right)\,\left(\cos\left(\mathrm{thi}\right)+\frac{\sin\left(\mathrm{thi}\right)\,\left(\frac{\mathrm{dy}}{f}-\frac{y}{f}\right)-\cos\left(\mathrm{thi}\right)\,\sin\left(\mathrm{psi}\right)\,\left(\frac{\mathrm{dx}}{f}-\frac{x}{f}\right)}{\cos\left(\mathrm{psi}\right)}\right)}'
+
+
+FINAL_ROT2DDIV_Y_LATEX =
+
+    '\frac{\frac{\sin\left(\varphi \right)\,\left(\sin\left(\mathrm{psi}\right)+\cos\left(\mathrm{psi}\right)\,\left(\frac{\mathrm{dx}}{f}-\frac{x}{f}\right)\right)+\cos\left(\varphi \right)\,\sin\left(\mathrm{thi}\right)\,\left(\cos\left(\mathrm{psi}\right)-\sin\left(\mathrm{psi}\right)\,\left(\frac{\mathrm{dx}}{f}-\frac{x}{f}\right)\right)}{\cos\left(\mathrm{thi}\right)}-\cos\left(\varphi \right)\,\left(\frac{\mathrm{dy}}{f}-\frac{y}{f}\right)}{\frac{f\,\cos\left(\mathrm{psi}\right)-\mathrm{dx}\,\sin\left(\mathrm{psi}\right)+x\,\sin\left(\mathrm{psi}\right)}{f}+\frac{\mathrm{dy}\,\sin\left(\mathrm{thi}\right)-y\,\sin\left(\mathrm{thi}\right)}{f\,\cos\left(\mathrm{thi}\right)}}'
+
+
+
+%%%%%%%%%%%%%%%%%%% WITH DZ
+
+FINAL_ROT2DDIV_X =
+ 
+(cos(phi)*(sin(psi)*(dz - z) - (cos(psi)*(dz + z)*(dx - x))/f) - sin(phi)*(sin(thi)*(cos(psi)*(dz - z) + (sin(psi)*(dz + z)*(dx - x))/f) + (cos(thi)*(dz + z)*(dy - y))/f))/(cos(psi)*(((sin(thi)*(dz + z)*(dy - y))/f - (cos(thi)*sin(psi)*(dz + z)*(dx - x))/f)/cos(psi) - cos(thi)*(dz - z)))
+ 
+FINAL_ROT2DDIV_Y =
+ 
+((sin(phi)*(sin(psi)*(dz - z) - (cos(psi)*(dz + z)*(dx - x))/f) + cos(phi)*sin(thi)*(cos(psi)*(dz - z) + (sin(psi)*(dz + z)*(dx - x))/f))/cos(thi) + (cos(phi)*(dz + z)*(dy - y))/f)/(cos(psi)*(dz - z) + (sin(psi)*(dz + z)*(dx - x))/f - (tan(thi)*(dz + z)*(dy - y))/f)
+ 
+
+
+
+
+
+
+
+
+
+%%%  ///////////////////////////////// EMBED WITH ROLL WITHOUT DZ/////////////////////////////////////////
+
+syms psi thi phi  dx dy dz x y z f X2 Y2 real
+
+T1=[1 0 0 dx; 0 1 0 dy; 0 0 1 0; 0 0 0 1];
+
+R1=[1 0 0 0; 0 cos(thi) -sin(thi) 0; 0 sin(thi) cos(thi) 0; 0 0 0 1] % tilt or pitch, rot theta (thi) on x 
+R2=[cos(psi) 0 sin(psi) 0; 0 1 0 0; -sin(psi) 0 cos(psi) 0; 0 0 0 1] % pan or yaw, rot psi on y
+R = R2*R1 %roll, pitch, then yaw, pan - tilt, then roll
+X = [x y z 1]
+FINAL_ROT0 = X * inv(T1)'
+FINAL_ROT1 = FINAL_ROT0 * R2
+FINAL_ROT2 = FINAL_ROT1 * R1
+%%%FINAL_ROT2 = FINAL_ROT2 * inv(T1)'
+FINAL_ROT2'
+
+% ADD ROLL
+
+R3 = [cos(phi) -sin(phi) 0 0 ; sin(phi) cos(phi) 0 0; 0 0 1 0; 0 0 0 1] % roll, rot phi on y
+FINAL_ROT3 = FINAL_ROT2  * R3;
+FINAL_ROT3'
+
+% Substitude to get 2D representation
+% https://www.mathworks.com/help/symbolic/subs.html
+% subs(s,old,new) returns a copy of s, replacing all occurrences of old with new, and then evaluates s.
+X2 = (x * (z))/f
+Y2 = (y * (z))/f
+dX = (dx * (z))/f
+dY = (dy * (z))/f
+
+%%% ROLL ADDITION
+% for pan - tilt X
+FINAL_ROT2D = subs(FINAL_ROT3,x,X2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,y,Y2) 
+FINAL_ROT2D = subs(FINAL_ROT2D,dx,dX) 
+FINAL_ROT2D = subs(FINAL_ROT2D,dy,dY) 
+FINAL_ROT2DX = FINAL_ROT2D / cos(psi) %simplify for deriving X !!!!
+FINAL_ROT2DX = simplify(FINAL_ROT2DX ,'Steps',150)
+FINAL_ROT2DX'
+FINAL_ROT2DDIV_X = FINAL_ROT2DX(1) / FINAL_ROT2DX(3)
+FINAL_ROT2DDIV_X = simplify(FINAL_ROT2DDIV_X,'Steps',150)
+
+FINAL_ROT2DY = FINAL_ROT2D / cos(thi) %simplify for deriving Y !!!!
+FINAL_ROT2DY = simplify(FINAL_ROT2DY ,'Steps',150)
+FINAL_ROT2DY'
+FINAL_ROT2DDIV_Y = FINAL_ROT2DY(2) / FINAL_ROT2DY(3)
+FINAL_ROT2DDIV_Y = simplify(FINAL_ROT2DDIV_Y,'Steps',150)
+
+%show equations nicely
+%https://www.mathworks.com/help/symbolic/sym.latex.html
+%https://www.mathworks.com/help/matlab/matlab_prog/insert-equations.html
+%https://www.mathworks.com/matlabcentral/answers/340517-is-it-possible-to-output-expressions-using-latex
+
+FINAL_ROT2DDIV_X_LATEX = latex(FINAL_ROT2DDIV_X)
+FINAL_ROT2DDIV_Y_LATEX = latex(FINAL_ROT2DDIV_Y)
+
+
+///////////////////////////////// %%%%%%%%%%%%%%%%%%%%%%% /////////////////////////////////
+
+FINAL_ROT2DDIV_X =
+ 
+-(cos(phi)*(sin(psi) + cos(psi)*(dx/f - x/f)) - sin(phi)*(sin(thi)*(cos(psi) - sin(psi)*(dx/f - x/f)) - cos(thi)*(dy/f - y/f)))/(cos(psi)*(cos(thi) + (sin(thi)*(dy/f - y/f) - cos(thi)*sin(psi)*(dx/f - x/f))/cos(psi)))
+ 
+FINAL_ROT2DDIV_Y =
+ 
+((sin(phi)*(sin(psi) + cos(psi)*(dx/f - x/f)) + cos(phi)*sin(thi)*(cos(psi) - sin(psi)*(dx/f - x/f)))/cos(thi) - cos(phi)*(dy/f - y/f))/((f*cos(psi) - dx*sin(psi) + x*sin(psi))/f + (dy*sin(thi) - y*sin(thi))/(f*cos(thi)))
+ 
